@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace 'com.nvllz.stepsy'
-    compileSdk 35
+    compileSdk 36
     defaultConfig {
         applicationId "com.nvllz.stepsy"
         minSdkVersion 26
-        targetSdkVersion 35
+        targetSdkVersion 36
         versionCode 20
         versionName "1.6.2"
         proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -68,6 +68,7 @@ android {
 
 dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation 'com.google.guava:guava:33.0.0-android'
     implementation 'androidx.preference:preference-ktx:1.2.1'
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
@@ -78,11 +79,13 @@ dependencies {
     implementation "androidx.documentfile:documentfile:1.1.0"
     implementation "androidx.lifecycle:lifecycle-process:2.9.1"
 
-
+    
     implementation "androidx.datastore:datastore-preferences:1.1.7"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.9.1"
     implementation 'com.google.android.material:material:1.13.0'
+    
+    implementation "androidx.health.connect:connect-client:1.1.0-rc03"
 
     fullImplementation 'com.google.android.gms:play-services-base:18.10.0'
     fullImplementation 'com.google.android.gms:play-services-location:21.3.0'

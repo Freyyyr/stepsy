@@ -35,6 +35,12 @@ import com.nvllz.stepsy.util.TimedPauseManager
 import com.nvllz.stepsy.util.Util.distanceUnit
 import com.nvllz.stepsy.util.WidgetManager
 import java.text.NumberFormat
+import androidx.lifecycle.lifecycleScope 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import com.nvllz.stepsy.util.HealthConnectManager
+import java.time.Instant
 
 internal class MotionService : Service() {
     private var mTodaysSteps: Int = 0
@@ -76,6 +82,12 @@ internal class MotionService : Service() {
         goalReachedToday = AppPreferences.dailyGoalNotification
                 && AppPreferences.dailyGoalTarget > 0
                 && mTodaysSteps >= AppPreferences.dailyGoalTarget
+
+        stepsAtLastHealthConnectWrite = AppPreferences.healthConnectStepsAtLastWrite
+        lastHealthConnectWriteTime = AppPreferences.healthConnectLastWriteTime
+            .takeIf { it.isNotEmpty() }
+            ?.let { Instant.parse(it) }
+            ?: Instant.now()
 
         if (mCurrentDate.isEmpty()) {
             mCurrentDate = Util.todayDateString()
@@ -157,6 +169,9 @@ internal class MotionService : Service() {
     private var lastSharedPrefsWriteTime: Long = 0
     private var lastDbWriteTime: Long = 0
     private var lastWidgetUpdateTime: Long = 0
+    private var lastHealthConnectWriteTime: Instant = Instant.now()
+    private var stepsAtLastHealthConnectWrite: Int = 0
+    private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     private val dataStoreWriteInterval: Long
         get() = if (isBatterySavingEnabled(this)) 15_000L else 7_500L
@@ -170,6 +185,23 @@ internal class MotionService : Service() {
         val todayStr = Util.todayDateString()
 
         if (todayStr != mCurrentDate) {
+            if (AppPreferences.healthConnectSyncEnabled) {
+                val midnight = java.time.LocalDate.parse(mCurrentDate)
+                    .plusDays(1)
+                    .atStartOfDay(java.time.ZoneId.systemDefault())
+                    .toInstant()
+                val delta = mTodaysSteps - stepsAtLastHealthConnectWrite
+                if (delta > 0) {
+                    val start = lastHealthConnectWriteTime
+                    serviceScope.launch {
+                        HealthConnectManager.writeStepsDelta(this@MotionService, delta, start, midnight)
+                    }
+                }
+                stepsAtLastHealthConnectWrite = 0
+                lastHealthConnectWriteTime = midnight
+                AppPreferences.healthConnectStepsAtLastWrite = 0
+                AppPreferences.healthConnectLastWriteTime = midnight.toString()
+            }
             Database.getInstance(this).addEntry(mCurrentDate, mTodaysSteps)
 
             val existingSteps = Database.getInstance(this).getSumSteps(todayStr, todayStr)
@@ -205,6 +237,7 @@ internal class MotionService : Service() {
         if (currentTime - lastDbWriteTime >= dbWriteInterval || manualStepCountChange) {
             Database.getInstance(this).addEntry(mCurrentDate, mTodaysSteps)
             lastDbWriteTime = currentTime
+            syncStepsToHealthConnect()
         }
 
         if (currentTime - lastWidgetUpdateTime >= widgetsUpdateInterval || delayedTrigger || manualStepCountChange) {
@@ -213,6 +246,25 @@ internal class MotionService : Service() {
         }
 
         sendUpdate()
+    }
+
+    private fun syncStepsToHealthConnect() {
+        if (!AppPreferences.healthConnectSyncEnabled) return
+
+        val delta = mTodaysSteps - stepsAtLastHealthConnectWrite
+        if (delta <= 0) return // couvre aussi le cas d'une correction manuelle à la baisse
+
+        val now = Instant.now()
+        val start = lastHealthConnectWriteTime
+
+        serviceScope.launch {
+            HealthConnectManager.writeStepsDelta(this@MotionService, delta, start, now)
+        }
+
+        stepsAtLastHealthConnectWrite = mTodaysSteps
+        lastHealthConnectWriteTime = now
+        AppPreferences.healthConnectStepsAtLastWrite = mTodaysSteps
+        AppPreferences.healthConnectLastWriteTime = now.toString()
     }
 
     private fun updateAllWidgets() {

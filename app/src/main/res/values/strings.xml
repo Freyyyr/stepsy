@@ -104,6 +104,10 @@
     <string name="pref_vehicle_filter_summary_foss">More accurate step recognition using Google Play Services API, available in the full build only. You can get it on Github (github.com/nvllz/stepsy)</string>
     <string name="vehicle_filter_unavailable">Activity Recognition API is not available on this device</string>
 
+    <string name="pref_health_connect_title">Health Connect</string>
+    <string name="pref_health_connect_summary">Sync steps to Health Connect</string>
+    <string name="health_connect_unavailable">Health Connect is not available on this device</string>
+
     <string name="header_about">App info</string>
     <string name="about_stepsy">About</string>
     <string name="about_version">Version</string>

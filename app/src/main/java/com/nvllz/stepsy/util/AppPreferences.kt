@@ -38,6 +38,9 @@ object AppPreferences {
         val WEIGHT                               = stringPreferencesKey("weight")
         val STEP_LENGTH                          = floatPreferencesKey("step_length")
         val UNIT_SYSTEM                          = stringPreferencesKey("unit_system")
+        val HEALTH_CONNECT_SYNC_ENABLED          = booleanPreferencesKey("health_connect_sync_enabled")
+        val HEALTH_CONNECT_LAST_WRITE_TIME       = stringPreferencesKey("health_connect_last_write_time")
+        val HEALTH_CONNECT_STEPS_AT_LAST_WRITE   = intPreferencesKey("health_connect_steps_at_last_write")
         val DATE_FORMAT                          = stringPreferencesKey("date_format")
         val FIRST_DAY_OF_WEEK                    = stringPreferencesKey("first_day_of_week")
         val APP_VERSION_CODE                     = intPreferencesKey("app_version_code")
@@ -256,6 +259,24 @@ object AppPreferences {
         get() = runBlocking { vehicleFilterEnabledFlow().first() }
         set(value) = runBlocking { dataStore.edit { it[PreferenceKeys.VEHICLE_FILTER_ENABLED] = value } }
 
+    // Health Connect sync
+
+    fun healthConnectSyncEnabledFlow(): Flow<Boolean> = dataStore.data.map {
+        it[PreferenceKeys.HEALTH_CONNECT_SYNC_ENABLED] ?: false
+    }
+
+    var healthConnectSyncEnabled: Boolean
+        get() = runBlocking { healthConnectSyncEnabledFlow().first() }
+        set(value) = runBlocking { dataStore.edit { it[PreferenceKeys.HEALTH_CONNECT_SYNC_ENABLED] = value } }
+
+    var healthConnectLastWriteTime: String
+        get() = runBlocking { dataStore.data.map { it[PreferenceKeys.HEALTH_CONNECT_LAST_WRITE_TIME] ?: "" }.first() }
+        set(value) = runBlocking { dataStore.edit { it[PreferenceKeys.HEALTH_CONNECT_LAST_WRITE_TIME] = value } }
+
+    var healthConnectStepsAtLastWrite: Int
+        get() = runBlocking { dataStore.data.map { it[PreferenceKeys.HEALTH_CONNECT_STEPS_AT_LAST_WRITE] ?: 0 }.first() }
+        set(value) = runBlocking { dataStore.edit { it[PreferenceKeys.HEALTH_CONNECT_STEPS_AT_LAST_WRITE] = value } }
+        
     // Dialogs
 
     @OptIn(DelicateCoroutinesApi::class)

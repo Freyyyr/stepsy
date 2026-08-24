@@ -12,12 +12,21 @@
     <uses-permission
         android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"
         tools:ignore="HighSamplingRate" />
+    <uses-permission android:name="android.permission.health.WRITE_STEPS" />
+    
 
     <!-- Required Features -->
     <uses-feature
         android:name="android.hardware.sensor.stepcounter"
         android:required="true" />
 
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+        <intent>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        </intent>
+    </queries>
+    
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -27,6 +36,25 @@
         android:localeConfig="@xml/locales_config"
         android:theme="@style/Theme.stepsy">
 
+        <meta-data
+            android:name="health_permissions"
+            android:resource="@xml/health_permissions" />
+
+        <activity
+            android:name=".ui.HealthConnectRationaleActivity"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+
+        </activity>
+        
         <!-- Main Activity -->
         <activity
             android:name="com.nvllz.stepsy.ui.MainActivity"
